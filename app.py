@@ -9,11 +9,13 @@ from typing import Dict, Any
 import time
 import re
 import html
-from pptx.dml.chart import CategoryChartData
-from pptx.enum.chart import XL_CHART_TYPE
 import logging
 from logging.handlers import RotatingFileHandler
 from os import environ
+
+# Diese Imports temporär auskommentieren bis wir die Chart-Funktionalität implementieren
+# from pptx.dml.chart import CategoryChartData
+# from pptx.enum.chart import XL_CHART_TYPE
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads/'
