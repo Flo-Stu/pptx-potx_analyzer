@@ -87,26 +87,64 @@ def analyze_pptx(filepath):
 
 @app.route('/generate_script', methods=['POST'])
 def generate_script():
-    master_url = request.form.get('master_url')
-    layout_data = json.loads(request.form.get('layout_data'))
-    
-    # Generiere den Python-Code
-    generated_code = generate_pptx_code(master_url, layout_data)
-    session['last_generated_code'] = generated_code
-    
-    return render_template('index.html', details=layout_data, generated_code=generated_code)
+    try:
+        master_url = request.form.get('master_url')
+        if not master_url:
+            app.logger.error('Keine Master-URL angegeben')
+            return "Master-URL ist erforderlich", 400
+            
+        layout_data_str = request.form.get('layout_data')
+        if not layout_data_str:
+            app.logger.error('Keine Layout-Daten gefunden')
+            return "Layout-Daten sind erforderlich", 400
+            
+        try:
+            layout_data = json.loads(layout_data_str)
+        except json.JSONDecodeError as e:
+            app.logger.error(f'Fehler beim Parsen der Layout-Daten: {str(e)}')
+            return "Ungültige Layout-Daten", 400
+        
+        # Generiere den Python-Code
+        generated_code = generate_pptx_code(master_url, layout_data)
+        if not generated_code:
+            app.logger.error('Code-Generierung fehlgeschlagen')
+            return "Fehler bei der Code-Generierung", 500
+            
+        session['last_generated_code'] = generated_code
+        
+        app.logger.info('Code erfolgreich generiert')
+        return render_template('index.html', 
+                             details=layout_data, 
+                             generated_code=generated_code)
+                             
+    except Exception as e:
+        app.logger.error(f'Unerwarteter Fehler bei der Code-Generierung: {str(e)}')
+        return jsonify({
+            'error': str(e),
+            'status': 'error',
+            'details': {
+                'type': type(e).__name__,
+                'message': str(e)
+            }
+        }), 500
 
 @app.route('/download_script')
 def download_script():
-    generated_code = session.get('last_generated_code', '')
-    if not generated_code:
-        return "Kein Code verfügbar", 404
-    
-    return Response(
-        generated_code,
-        mimetype='text/plain',
-        headers={'Content-Disposition': 'attachment;filename=create_presentation.py'}
-    )
+    try:
+        generated_code = session.get('last_generated_code', '')
+        if not generated_code:
+            app.logger.warning('Kein generierter Code in der Session gefunden')
+            return "Kein Code verfügbar", 404
+        
+        app.logger.info('Code-Download gestartet')
+        return Response(
+            generated_code,
+            mimetype='text/plain',
+            headers={'Content-Disposition': 'attachment;filename=create_presentation.py'}
+        )
+    except Exception as e:
+        app.logger.error(f'Fehler beim Download: {str(e)}')
+        return "Fehler beim Download", 500
 
 def generate_pptx_code(master_url, layout_data):
     code = f"""from pptx import Presentation
