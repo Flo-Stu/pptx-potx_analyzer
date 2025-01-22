@@ -1,0 +1,6 @@
+Flask
+python-pptx
+gunicorn
+Werkzeug
+requests
+typing

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <title>PPTX Analyzer</title>
+    <style>
+      .hidden {
+        display: none;
+      }
+      pre {
+        background-color: #f5f5f5;
+        padding: 15px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>PPTX Analyzer</h1>
+    <form method="post" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".pptx,.potx">
+      <input type="submit" value="Analyse starten">
+    </form>
+    
+    {% if details %}
+      <h2>Analyseergebnisse:</h2>
+      <ul>
+        {% for layout in details %}
+          <li>
+            <strong>Layout {{ layout.layout_index }}: {{ layout.layout_name }}</strong>
+            <ul>
+              {% for placeholder in layout.placeholders %}
+                <li>Platzhalter {{ placeholder.idx }}: {{ placeholder.type }}</li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <form method="post" action="{{ url_for('generate_script') }}">
+        <div>
+          <label for="master_url">Master URL:</label>
+          <input type="text" id="master_url" name="master_url" required>
+        </div>
+        <input type="hidden" name="layout_data" value="{{ details|tojson }}">
+        <input type="submit" value="PPT-Skript erstellen">
+      </form>
+    {% endif %}
+
+    {% if generated_code %}
+      <h2>Generierter Code:</h2>
+      <pre><code>{{ generated_code }}</code></pre>
+      <a href="{{ url_for('download_script') }}" class="button">Code herunterladen</a>
+    {% endif %}
+  </body>
+</html>
